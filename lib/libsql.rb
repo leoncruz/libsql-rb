@@ -69,17 +69,19 @@ module Libsql
   end
 
   class QueryResult
-    Row = Struct.new(:column, :value)
-
     def initialize(response)
       @results = response.results
     end
 
     def rows
       @results.first["response"]["result"]["rows"].map do |register|
+        row = Row.new
+
         register.map.with_index do |r, index|
-          Row.new(cols[index]["name"], r["value"])
+          row.set(cols[index]["name"], r["value"])
         end
+
+        row
       end.flatten
     end
 
@@ -87,6 +89,16 @@ module Libsql
 
       def cols
         @results.first["response"]["result"]["cols"]
+      end
+
+      class Row
+        def set(column, value)
+          instance_variable_set :"@#{column}", value
+
+          self.class.class_eval do
+            define_method column.to_sym, -> { value }
+          end
+        end
       end
   end
 
