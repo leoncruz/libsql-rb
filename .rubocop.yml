@@ -39,3 +39,9 @@ Style/UnlessElse:
 
 Style/ConditionalAssignment:
   Enabled: false
+
+Layout/CaseIndentation:
+  EnforcedStyle: end
+
+Layout/EndAlignment:
+  EnforcedStyleAlignWith: variable

@@ -13,10 +13,12 @@ module Libsql
       _build_uri
     end
 
-    def execute(query_string)
+    def execute(query_string, pos_args = [])
+      positional_args = PositionalArgBuilder.new(*pos_args).build
+
       body = {
         requests: [
-          { type: :execute, stmt: { sql: query_string } },
+          { type: :execute, stmt: { sql: query_string, args: positional_args } },
           { type: :close }
         ]
       }
@@ -41,6 +43,29 @@ module Libsql
           @uri = URI(@url)
         end
       end
+  end
+
+  class PositionalArgBuilder
+    attr_reader :args
+
+    def initialize(*args)
+      @args = args
+    end
+
+    def build
+      args.reduce([]) do |acc, value|
+        type = case value
+        when Integer
+          "integer"
+        when NilClass
+          "null"
+        else
+          "text"
+        end
+
+        acc << { type:, value: }
+      end
+    end
   end
 
   class QueryResult
