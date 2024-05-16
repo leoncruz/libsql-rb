@@ -1,5 +1,5 @@
 AllCops:
-  TargetRubyVersion: 3.0
+  TargetRubyVersion: 3.1
 
 Style/StringLiterals:
   Enabled: true
@@ -17,4 +17,25 @@ Layout/LineLength:
   Max: 120
 
 Style/Documentation:
+  Enabled: false
+
+Layout/FirstArrayElementIndentation:
+  Enabled: true
+  EnforcedStyle: consistent
+
+Layout/FirstHashElementIndentation:
+  Enabled: true
+  EnforcedStyle: consistent
+
+Metrics:
+  Enabled: false
+
+Layout/IndentationConsistency:
+  Enabled: true
+  EnforcedStyle: indented_internal_methods
+
+Style/UnlessElse:
+  Enabled: false
+
+Style/ConditionalAssignment:
   Enabled: false
