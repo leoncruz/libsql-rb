@@ -13,15 +13,33 @@ module Libsql
       _build_uri
     end
 
-    def execute(query_string, pos_args = [])
-      positional_args = PositionalArgBuilder.new(*pos_args).build
+    def execute(query_string, args = nil)
+      argument_builder = case args
+      in Array
+        PositionalArgBuilder.new(*args)
+      in Hash
+        NamedArgBuilder.new(**args)
+      in NilClass
+        EmptyBuilder.new
+      else
+        raise NotImplementedError
+      end
 
-      body = {
-        requests: [
-          { type: :execute, stmt: { sql: query_string, args: positional_args } },
-          { type: :close }
-        ]
-      }
+      if argument_builder.empty?
+        body = {
+          requests: [
+            { type: :execute, stmt: { sql: query_string } },
+            { type: :close }
+          ]
+        }
+      else
+        body = {
+          requests: [
+            { type: :execute, stmt: { sql: query_string, argument_builder.key => argument_builder.build } },
+            { type: :close }
+          ]
+        }
+      end
 
       response = http_client.post(STMT_ENDPOINT, body)
 
@@ -45,6 +63,12 @@ module Libsql
       end
   end
 
+  class EmptyBuilder
+    def empty? = true
+
+    def key = :no_key
+  end
+
   class PositionalArgBuilder
     attr_reader :args
 
@@ -52,18 +76,49 @@ module Libsql
       @args = args
     end
 
+    def empty? = @args.empty?
+
+    def key = :args
+
     def build
       args.reduce([]) do |acc, value|
         type = case value
-        when Integer
+        in Integer
           "integer"
-        when NilClass
+        in NilClass
           "null"
         else
           "text"
         end
 
         acc << { type:, value: }
+      end
+    end
+  end
+
+  class NamedArgBuilder
+    attr_reader :kwargs
+
+    def initialize(**kwargs)
+      @kwargs = kwargs
+    end
+
+    def empty? = @kwargs.empty?
+
+    def key = :named_args
+
+    def build
+      kwargs.reduce([]) do |acc, (key, value)|
+        type = case value
+        in Integer
+          "integer"
+        in NilClass
+          "null"
+        else
+          "text"
+        end
+
+        acc << { name: key, value: { type:, value: } }
       end
     end
   end
